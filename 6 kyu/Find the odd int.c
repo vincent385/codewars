@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <stddef.h>
 
 // From an array of integers, find the one that appears an odd number of times.
 int find_odd (size_t length, const int array[length])

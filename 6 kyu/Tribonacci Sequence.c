@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 
 // Basically fibonacci but sums last 3 numbers of the sequence to generate the next instead of the last 2
