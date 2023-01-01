@@ -3,8 +3,22 @@
 
 float finduniq(const float *nums, size_t n)
 {
-    // optimization issues nested for loop is too slow...
-    return 0;
+    size_t i = 0;
+    size_t j = 0;
+    int count = 0;
+    while (i < n) {
+        if (nums[i] == nums[j])
+            count++;
+        if (j % n == 0 && j != 0) {
+            if (count == 1)
+                break;
+            i++;
+            j = 0;
+            count = 0;
+        }
+        j++;
+    }
+    return nums[i];
 }
 
 int main () {
