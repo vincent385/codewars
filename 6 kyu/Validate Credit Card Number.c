@@ -1,17 +1,25 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-int *digits2arr(long digits);
+int getDigitCount(long digits);
+int *digits2arr(long digits, int length);
 
 bool validate(long digits)  {
-    int *digitArr = digits2arr(digits);
+    int n = getDigitCount(digits);
+    int *digitArr = digits2arr(digits, n);
+    for (int i = n - 2; i >= 0; i -= 2) {
+        digitArr[i] *= 2;
+        if (digitArr[i] > 9)
+            digitArr[i] -= 9;
+    }
+    
+    int sum = 0;
+    for (int j = 0; j < n; j++) {
+        sum += digitArr[j];
+    }
+    if (sum % 10 == 0)
+        return true;
     return false;
-}
-
-int main () {
-    printf("the number %d is %s\n", 1324, validate(1324) ? "valid" : "invalid");
-    return 0;
 }
 
 int getDigitCount(long digits) {
@@ -23,14 +31,13 @@ int getDigitCount(long digits) {
     return n;
 }
 
-int *digits2arr(long digits) {
-    int n = getDigitCount(digits);
-    int *arr = malloc(n * sizeof(int));
-    size_t i = 0;
+int *digits2arr(long digits, int length) {
+    int *arr = malloc(length * sizeof(int));
+    int i = length - 1;
     while (digits) {
         arr[i] = digits % 10;
         digits /= 10;
-        i++;
+        i--;
     }
     return arr;
 }
