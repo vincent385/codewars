@@ -6,4 +6,4 @@ Kata are ranked in order of difficulty from *8 kyu* problems (easiest) to *1 kyu
 
 There is also a personal rank which is based on how many Kata you solve and their difficulty.
 
-Currently my rank is *7 kyu*
+Currently my rank is *6 kyu*
