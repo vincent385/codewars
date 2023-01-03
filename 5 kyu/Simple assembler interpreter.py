@@ -40,8 +40,3 @@ class Interpreter:
             args.remove(instruction)
             self.instructions[instruction](*args)
         return self.registers
-
-
-if __name__ == '__main__':
-    interpreter = Interpreter()
-    print(interpreter.run(['mov a 5', 'inc a', 'dec a', 'dec a', 'jnz a -1', 'inc a']))
