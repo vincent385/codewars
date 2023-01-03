@@ -1,40 +1,47 @@
-def simple_assembler(program):
-    reg_dict = {}
-    lcharacters = 'abcdefghijklmnopqrstuvwxyz'
-    offset = 0
-    while offset < len(program):
-        instruction = program[offset].split()
-        if instruction[0] == 'mov':
-            if instruction[2] in lcharacters:
-                reg_dict[instruction[1]] = reg_dict[instruction[2]]
+class Interpreter:
+    def __init__(self):
+        self.registers = {}
+        self.instructions = {
+            'mov': self.mov,
+            'inc': self.inc,
+            'dec': self.dec,
+            'jnz': self.jnz
+        }
+        self.pc = 0
+
+    def mov(self, x, y):
+        self.registers[x] = self.registers[y] if y in self.registers else int(y)
+        self.pc += 1
+
+    def inc(self, x):
+        self.registers[x] += 1
+        self.pc += 1
+
+    def dec(self, x):
+        self.registers[x] -= 1
+        self.pc += 1
+
+    def jnz(self, x, y):
+        if x in self.registers:
+            if self.registers[x] != 0:
+                self.pc += self.registers[y] if y in self.registers else int(y)
             else:
-                reg_dict[instruction[1]] = int(instruction[2])
-            offset += 1
-        elif instruction[0] == 'inc':
-            reg_dict[instruction[1]] += 1
-            offset += 1
-        elif instruction[0] == 'dec':
-            reg_dict[instruction[1]] -= 1
-            offset += 1
-        elif instruction[0] == 'jnz':
-            if instruction[1] in lcharacters:
-                if reg_dict[instruction[1]] == 0:
-                    offset += 1
-                else:
-                    if instruction[2] in lcharacters:
-                        offset += reg_dict[instruction[2]]
-                    else:
-                        offset += int(instruction[2])
+                self.pc += 1
+        else:
+            if x != 0:
+                self.pc += self.registers[y] if y in self.registers else int(y)
             else:
-                if int(instruction[1]) == 0:
-                    offset += 1
-                else:
-                    if instruction[2] in lcharacters:
-                        offset += reg_dict[instruction[2]]
-                    else:
-                        offset += int(instruction[2])
-    return reg_dict
+                self.pc += 1
+
+    def run(self, program):
+        while self.pc < len(program):
+            args = program[self.pc].split()
+            instruction = args[0]
+            args.remove(instruction)
+            self.instructions[instruction](*args)
+        return self.registers
 
 
 if __name__ == '__main__':
-    print(simple_assembler(['mov a 5', 'inc a', 'dec a', 'dec a', 'jnz a -1', 'inc a']))
+    interpreter = Interpreter()
+    print(interpreter.run(['mov a 5', 'inc a', 'dec a', 'dec a', 'jnz a -1', 'inc a']))
