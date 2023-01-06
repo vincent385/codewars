@@ -18,7 +18,17 @@ class Interpreter:
             'mul': self.mul,
             'div': self.div,
             'jmp': self.jmp,
-            'cmp': self.cmp
+            'cmp': self.cmp,
+            'jne': self.jne,
+            'je': self.je,
+            'jge': self.jge,
+            'jg': self.jg,
+            'jle': self.jle,
+            'jl': self.jl,
+            'call': self.call,
+            'ret': self.ret,
+            'msg': self.msg,
+            'end': self.end
         }
 
     def __preprocess__(self, code: str):
@@ -78,12 +88,11 @@ class Interpreter:
         self.regs['ip'] = self.labels[lbl]
 
     def cmp(self, x, y):
-        a = self.get_value(x)
-        b = self.get_value(y)
-        if a == b:
+        result = self.get_value(x) - self.get_value(y)
+        if result == 0:
             self.flags['zf'] = True
             self.flags['sf'] = False
-        elif a < b:
+        elif result < 0:
             self.flags['zf'] = False
             self.flags['sf'] = True
         else:
@@ -118,17 +127,21 @@ class Interpreter:
         self.regs['ip'] = self.regs['lr']
 
     def msg(self, *args):
-        NotImplemented
+        print(*args)
+        self.__increment_instruction_pointer__()
 
     def end(self):
         # figure this out last
-        NotImplemented
+        self.__increment_instruction_pointer__()
 
     def run(self, code):
-        self.current_code = code
-        print(code)
-        print(len(code))
-        print(self.labels)
+        while self.regs['ip'] < len(code):
+            line = code[self.regs['ip']]
+            instruction = line[0]
+            args = line[1:]
+            print("ins: {}, args: {}".format(instruction, args))
+            self.instructions[instruction](*args)
+            print("regs: {}".format(self.regs))
 
 
 def assembler_interpreter(program):
