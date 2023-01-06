@@ -1,13 +1,49 @@
+class Message:
+    def __init__(self, text, registers):
+        self.__text = text
+        self.__regs = registers
+
+    def process(self):
+        def advance():
+            self.__index += 1
+            self.__current_char = self.__text[self.__index] if self.__index < len(self.__text) else None
+
+        def read_raw_text():
+            text = ""
+            while self.__current_char != "'":
+                text += self.__current_char
+                advance()
+            advance()
+            return text
+
+        lalphabet = 'abcdefghijklmnopqrstuvwxyz'
+        string = ''
+        self.__index = 0
+        self.__current_char = self.__text[self.__index]
+        while self.__current_char != None:
+            if self.__current_char == "'":
+                advance()
+                string += read_raw_text()
+            elif self.__current_char in lalphabet:
+                string += str(self.__regs[self.__current_char])
+                advance()
+            advance()
+        self.out = string
+
+
 class Interpreter:
     def __init__(self):
         self.regs = {
             'ip': 0,
-            'lr': 0
+            'lr': 0,
+            'out': ''
         }
         self.flags = {
             'zf': False,
-            'sf': False
+            'sf': False,
+            'ex': False
         }
+        self.first_label_idx = None
         self.labels = {}
         self.instructions = {
             'mov': self.mov,
@@ -45,8 +81,11 @@ class Interpreter:
             if lines[idx]:
                 if lines[idx][0] not in self.instructions:
                     self.labels[lines[idx][0].replace(':', '')] = idx + 1
+                    if not self.first_label_idx:
+                        self.first_label_idx = idx + 1
             else:
                 lines.pop(idx)
+                idx -= 1
             idx += 1
         return lines
 
@@ -57,6 +96,7 @@ class Interpreter:
         return self.regs[val] if val in self.regs else int(val)
 
     def mov(self, x, y):
+        x = x.replace(',', '')
         self.regs[x] = self.get_value(y)
         self.__increment_instruction_pointer__()
 
@@ -69,25 +109,30 @@ class Interpreter:
         self.__increment_instruction_pointer__()
 
     def add(self, x, y):
+        x = x.replace(',', '')
         self.regs[x] += self.get_value(y)
         self.__increment_instruction_pointer__()
 
     def sub(self, x, y):
+        x = x.replace(',', '')
         self.regs[x] -= self.get_value(y)
         self.__increment_instruction_pointer__()
 
     def mul(self, x, y):
+        x = x.replace(',', '')
         self.regs[x] *= self.get_value(y)
         self.__increment_instruction_pointer__()
 
     def div(self, x, y):
-        self.regs[x] /= self.get_value(y)
+        x = x.replace(',', '')
+        self.regs[x] //= self.get_value(y)
         self.__increment_instruction_pointer__()
 
     def jmp(self, lbl):
         self.regs['ip'] = self.labels[lbl]
 
     def cmp(self, x, y):
+        x = x.replace(',', '')
         result = self.get_value(x) - self.get_value(y)
         if result == 0:
             self.flags['zf'] = True
@@ -120,47 +165,39 @@ class Interpreter:
 
     def call(self, lbl):
         # set link register to address to return to after ret
-        self.regs['lr'] = self.regs['ip'] + 1
+        if self.regs['ip'] < self.first_label_idx: self.regs['lr'] = self.regs['ip'] + 1
         self.jmp(lbl)
 
     def ret(self):
         self.regs['ip'] = self.regs['lr']
 
     def msg(self, *args):
-        print(*args)
+        message = Message(" ".join(args), self.regs)
+        message.process()
+        self.regs['out'] = message.out
         self.__increment_instruction_pointer__()
 
     def end(self):
-        # figure this out last
-        self.__increment_instruction_pointer__()
+        self.regs['ip'] = len(self.code)
+        self.flags['ex'] = True
 
-    def run(self, code):
-        while self.regs['ip'] < len(code):
-            line = code[self.regs['ip']]
+    def run(self, code, debug=False):
+        self.code = code
+        while self.regs['ip'] < len(self.code):
+            line = self.code[self.regs['ip']]
             instruction = line[0]
             args = line[1:]
-            print("ins: {}, args: {}".format(instruction, args))
+            if debug:
+                print(f'instruction: {instruction}, args: {args}')
+                print(f'labels: {self.labels}')
+                print(f'regs: {self.regs}\n')
             self.instructions[instruction](*args)
-            print("regs: {}".format(self.regs))
+        if not self.flags['ex']:
+            return -1
+        return self.regs['out']
 
 
 def assembler_interpreter(program):
     interpreter = Interpreter()
     code = interpreter.__preprocess__(program)
-    return interpreter.run(code)
-
-
-if __name__ == '__main__':
-    program = program = """
-    ; My first program
-    mov  a, 5
-    inc  a
-    call function
-    msg  '(5+1)/2 = ', a    ; output message
-    end
-
-    function:
-        div  a, 2
-        ret
-    """
-    assembler_interpreter(program)
+    return interpreter.run(code, False)
